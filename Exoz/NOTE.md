@@ -1,1 +1,1 @@
-Only run Main.lau cuz that auto checks what game ur in and yh
+Only run `Main.lau` cuz that auto checks what game ur in and yh
