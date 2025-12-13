@@ -1,20 +1,10 @@
 <p align="center">
-  <picture>
-    <img
-      alt="flame logo"
-      src="./Images/Exoz.png"
-      width="120"
-    >
-  </picture>
+  <img alt="Exoz logo" src="./Images/Exoz.png" width="90">
 </p>
 
-<h1 align="center" style="font-size: 3em;">
-  👽 Exoz 👽
-</h1>
+<h1 align="center">👽 Exoz 👽</h1>
 
-<p align="center" style="font-size: 1.5em; font-weight: bold;">
-  Never lose again.
-</p>
+<h3 align="center">Never lose again.</h3>
 
 -----------------
 ## 📜 | SCRIPT: 
