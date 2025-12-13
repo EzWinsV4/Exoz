@@ -1,9 +1,7 @@
 <p align="center">
   <img alt="Exoz logo" src="./Images/Exoz.png" width="90">
 </p>
-
 <h1 align="center">👽 Exoz 👽</h1>
-
 <h3 align="center">Never lose again.</h3>
 
 -----------------
