@@ -1,4 +1,4 @@
-
+-- This isn't mine.
 local playersService = game:GetService("Players")
 local workspaceService = game:GetService("Workspace")
 local runService = game:GetService("RunService")
