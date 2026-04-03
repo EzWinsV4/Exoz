@@ -9,10 +9,12 @@ EspLib.Settings = {
     TeamCheck = true,
     MaxDistance = 1000,
     BoxVisible = false,
-    BoxColor = Color3.new(1, 1, 1),
+    BoxColor = Color3.new(0.4, 0.3, 0.7),
     BoxFilled = false,
-    BoxFillColor = Color3.new(0, 0, 0),
+    BoxFillColor = Color3.new(0.4, 0.3, 0.7),
     BoxFillTransparency = 0.5,
+    BoxOutline = true,
+    BoxOutlineColor = Color3.new(0, 0, 0),
     NametagVisible = false,
     NametagFilled = true,
     NametagFillTransparency = 0.5,
@@ -25,10 +27,12 @@ EspLib.Settings = {
     NametagCornerRadius = 8,
     HealthbarVisible = false,
     HealthbarSpeed = 0.2,
+    HealthbarWidth = 4,
     HealthbarColor1 = Color3.fromRGB(0, 255, 0),
     HealthbarColor2 = Color3.fromRGB(255, 255, 0),
     HealthbarColor3 = Color3.fromRGB(255, 0, 0),
     ArmorbarVisible = false,
+    ArmorbarWidth = 4,
     ArmorbarColor1 = Color3.fromRGB(0, 0, 255),
     ArmorbarColor2 = Color3.fromRGB(135, 206, 235),
     ArmorbarColor3 = Color3.fromRGB(1, 0, 0),
@@ -69,13 +73,21 @@ end
 function EspLib:CreateBox(target)
     local box = {
         Main = Drawing.new("Square"),
+        Outline = Drawing.new("Square"),
         Fill = Instance.new("Frame")
     }
     
-    box.Main.Thickness = 1
+    box.Main.Thickness = 1.5
     box.Main.Color = self.Settings.BoxColor
     box.Main.Filled = self.Settings.BoxFilled
     box.Main.Visible = false
+    box.Main.Transparency = 0
+    
+    box.Outline.Thickness = 2
+    box.Outline.Color = self.Settings.BoxOutlineColor
+    box.Outline.Filled = false
+    box.Outline.Visible = false
+    box.Outline.Transparency = 0
     
     box.Fill.Parent = self.Gui
     box.Fill.BackgroundColor3 = self.Settings.BoxFillColor
@@ -90,6 +102,7 @@ function EspLib:UpdateBoxes()
     if not self.Settings.BoxVisible then
         for _, data in pairs(self.Storage.Boxes) do
             data.Main.Visible = false
+            data.Outline.Visible = false
             data.Fill.Visible = false
         end
         return
@@ -111,6 +124,7 @@ function EspLib:UpdateBoxes()
                 if self.Settings.TeamCheck and LocalPlayer.Team and other.Team == LocalPlayer.Team then
                     if self.Storage.Boxes[other] then
                         self.Storage.Boxes[other].Main.Visible = false
+                        self.Storage.Boxes[other].Outline.Visible = false
                         self.Storage.Boxes[other].Fill.Visible = false
                     end
                     return
@@ -121,17 +135,23 @@ function EspLib:UpdateBoxes()
                 end
                 
                 local head = char:FindFirstChild("Head")
-                local headPos = (head and head.Position + Vector3.new(0, 1, 0)) or (root.Position + Vector3.new(0, 3, 0))
+                local headPos = (head and head.Position) or (root.Position + Vector3.new(0, 2.5, 0))
                 local feetPos = root.Position - Vector3.new(0, 3, 0)
                 
-                local headScreen = CurrentCamera:WorldToViewportPoint(headPos)
-                local feetScreen = CurrentCamera:WorldToViewportPoint(feetPos)
-                local rootScreen = CurrentCamera:WorldToViewportPoint(root.Position)
+                local headScreen, headOn = CurrentCamera:WorldToViewportPoint(headPos)
+                local feetScreen, feetOn = CurrentCamera:WorldToViewportPoint(feetPos)
+                
+                if not headOn or not feetOn then
+                    self.Storage.Boxes[other].Main.Visible = false
+                    self.Storage.Boxes[other].Outline.Visible = false
+                    self.Storage.Boxes[other].Fill.Visible = false
+                    return
+                end
                 
                 local height = math.abs(headScreen.Y - feetScreen.Y)
-                local width = height * 0.6
-                local centerX = rootScreen.X
-                local topY = (headScreen.Y + feetScreen.Y) / 2 - height / 2
+                local width = height * 0.55
+                local centerX = (headScreen.X + feetScreen.X) / 2
+                local topY = math.min(headScreen.Y, feetScreen.Y)
                 
                 local box = self.Storage.Boxes[other]
                 
@@ -148,6 +168,15 @@ function EspLib:UpdateBoxes()
                     box.Main.Color = self.Settings.BoxColor
                     box.Main.Visible = true
                     box.Fill.Visible = false
+                end
+                
+                if self.Settings.BoxOutline then
+                    box.Outline.Size = Vector2.new(width + 2, height + 2)
+                    box.Outline.Position = Vector2.new(centerX - width/2 - 1, topY - 1)
+                    box.Outline.Color = self.Settings.BoxOutlineColor
+                    box.Outline.Visible = true
+                else
+                    box.Outline.Visible = false
                 end
             end)
         end
@@ -167,6 +196,12 @@ function EspLib:CreateNametag(target)
     tag.BorderSizePixel = 0
     tag.TextXAlignment = Enum.TextXAlignment.Center
     tag.TextYAlignment = Enum.TextYAlignment.Center
+    
+    local stroke = Instance.new("UIStroke")
+    stroke.Parent = tag
+    stroke.Color = self.Settings.NametagOutlineColor
+    stroke.Thickness = 1
+    stroke.Enabled = self.Settings.NametagOutline
     
     local corners = Instance.new("UICorner")
     corners.CornerRadius = UDim.new(0, self.Settings.NametagCornerRadius)
@@ -208,7 +243,7 @@ function EspLib:UpdateNametags()
                 end
                 
                 local head = char:FindFirstChild("Head")
-                local headPos = head and head.Position or root.Position + Vector3.new(0, 2, 0)
+                local headPos = (head and head.Position) or (root.Position + Vector3.new(0, 2, 0))
                 local screenPos, onScreen = CurrentCamera:WorldToViewportPoint(headPos + Vector3.new(0, 1.5, 0))
                 
                 if onScreen then
@@ -216,7 +251,7 @@ function EspLib:UpdateNametags()
                     local nameText = other.Name
                     
                     local textBounds = {}
-                    local textWidth = #nameText * (self.Settings.NametagSize * 0.6)
+                    local textWidth = #nameText * (self.Settings.NametagSize * 0.55)
                     local textHeight = self.Settings.NametagSize * 1.5
                     
                     local paddingX = 16
@@ -237,6 +272,13 @@ function EspLib:UpdateNametags()
                     if not self.Settings.NametagFilled then
                         tag.BackgroundTransparency = 1
                     end
+                    
+                    for _, child in ipairs(tag:GetChildren()) do
+                        if child:IsA("UIStroke") then
+                            child.Enabled = self.Settings.NametagOutline
+                            child.Color = self.Settings.NametagOutlineColor
+                        end
+                    end
                 else
                     self.Storage.Nametags[other].Visible = false
                 end
@@ -256,8 +298,8 @@ function EspLib:CreateHealthbar(target)
     }
     
     bar.Background.Parent = self.Gui
-    bar.Background.BackgroundColor3 = Color3.fromRGB(21, 21, 21)
-    bar.Background.BackgroundTransparency = 0.45
+    bar.Background.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    bar.Background.BackgroundTransparency = 0.5
     bar.Background.BorderSizePixel = 0
     bar.Background.Visible = false
     
@@ -275,10 +317,11 @@ function EspLib:CreateHealthbar(target)
     
     bar.Text.Parent = self.Gui
     bar.Text.BackgroundTransparency = 1
-    bar.Text.TextSize = 10
-    bar.Text.Font = Enum.Font.Code
+    bar.Text.TextSize = 11
+    bar.Text.Font = Enum.Font.GothamBold
     bar.Text.TextColor3 = Color3.fromRGB(255, 255, 255)
     bar.Text.TextStrokeTransparency = 0
+    bar.Text.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
     bar.Text.Visible = false
     
     return bar
@@ -318,7 +361,7 @@ function EspLib:UpdateHealthbars()
                 end
                 
                 local head = char:FindFirstChild("Head")
-                local headPos = (head and head.Position) or (root.Position + Vector3.new(0, 2, 0))
+                local headPos = (head and head.Position) or (root.Position + Vector3.new(0, 2.5, 0))
                 local feetPos = root.Position - Vector3.new(0, 3, 0)
                 
                 local headScreen = CurrentCamera:WorldToViewportPoint(headPos)
@@ -326,26 +369,31 @@ function EspLib:UpdateHealthbars()
                 local rootScreen = CurrentCamera:WorldToViewportPoint(root.Position)
                 
                 local height = math.abs(headScreen.Y - feetScreen.Y)
-                local barX = rootScreen.X - 30
-                local barY = (headScreen.Y + feetScreen.Y) / 2 - height / 2
+                local boxWidth = height * 0.55
+                local boxLeft = rootScreen.X - (boxWidth / 2)
                 
-                local healthPercent = (hum.Health / hum.MaxHealth) * 100
-                local barHeight = height * (healthPercent / 100)
+                local barWidth = self.Settings.HealthbarWidth
+                local barX = boxLeft - barWidth - 3
+                local barY = headScreen.Y
+                
+                local healthPercent = math.clamp((hum.Health / hum.MaxHealth) * 100, 0, 100)
+                local fillHeight = height * (healthPercent / 100)
                 
                 local data = self.Storage.Healthbars[other]
                 data.Target = healthPercent
                 data.Current = LerpNumber(data.Current, data.Target, self.Settings.HealthbarSpeed)
                 
-                data.Background.Size = UDim2.new(0, 3, 0, height)
+                data.Background.Size = UDim2.new(0, barWidth, 0, height)
                 data.Background.Position = UDim2.new(0, barX, 0, barY)
                 data.Background.Visible = true
                 
-                data.Fill.Size = UDim2.new(0, 3, 0, height * (data.Current / 100))
-                data.Fill.Position = UDim2.new(0, 0, 0, height - (height * (data.Current / 100)))
+                local currentFillHeight = height * (data.Current / 100)
+                data.Fill.Size = UDim2.new(0, barWidth, 0, currentFillHeight)
+                data.Fill.Position = UDim2.new(0, 0, 0, height - currentFillHeight)
                 
                 local percentText = math.floor(healthPercent)
-                data.Text.Text = tostring(percentText)
-                data.Text.Position = UDim2.new(0, barX - 20, 0, barY + height - (height * (healthPercent / 100)) - 6)
+                data.Text.Text = percentText .. "%"
+                data.Text.Position = UDim2.new(0, barX - 25, 0, barY + (height * (1 - healthPercent / 100)) - 8)
                 data.Text.Visible = true
             end)
         end
@@ -361,8 +409,8 @@ function EspLib:CreateArmorbar(target)
     }
     
     bar.Background.Parent = self.Gui
-    bar.Background.BackgroundColor3 = Color3.fromRGB(21, 21, 21)
-    bar.Background.BackgroundTransparency = 0.45
+    bar.Background.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    bar.Background.BackgroundTransparency = 0.5
     bar.Background.BorderSizePixel = 0
     bar.Background.Visible = false
     
@@ -380,10 +428,11 @@ function EspLib:CreateArmorbar(target)
     
     bar.Text.Parent = self.Gui
     bar.Text.BackgroundTransparency = 1
-    bar.Text.TextSize = 10
-    bar.Text.Font = Enum.Font.Code
+    bar.Text.TextSize = 11
+    bar.Text.Font = Enum.Font.GothamBold
     bar.Text.TextColor3 = Color3.fromRGB(135, 206, 235)
     bar.Text.TextStrokeTransparency = 0
+    bar.Text.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
     bar.Text.Visible = false
     
     return bar
@@ -423,31 +472,43 @@ function EspLib:UpdateArmorbars()
                 end
                 
                 local head = char:FindFirstChild("Head")
-                local headScreen = CurrentCamera:WorldToViewportPoint((head and head.Position) or (root.Position + Vector3.new(0, 2, 0)))
-                local feetScreen = CurrentCamera:WorldToViewportPoint(root.Position - Vector3.new(0, 3, 0))
+                local headPos = (head and head.Position) or (root.Position + Vector3.new(0, 2.5, 0))
+                local feetPos = root.Position - Vector3.new(0, 3, 0)
+                
+                local headScreen = CurrentCamera:WorldToViewportPoint(headPos)
+                local feetScreen = CurrentCamera:WorldToViewportPoint(feetPos)
                 local rootScreen = CurrentCamera:WorldToViewportPoint(root.Position)
                 
                 local height = math.abs(headScreen.Y - feetScreen.Y)
-                local barX = rootScreen.X - 35
-                local barY = (headScreen.Y + feetScreen.Y) / 2 - height / 2
+                local boxWidth = height * 0.55
+                local boxLeft = rootScreen.X - (boxWidth / 2)
                 
                 local bodyEffects = char:FindFirstChild("BodyEffects")
                 local armorVal = (bodyEffects and bodyEffects:FindFirstChild("Armor")) and bodyEffects.Armor.Value or 0
-                local armorPercent = math.floor((armorVal / 200) * 100)
-                local barHeight = height * (armorPercent / 100)
+                local armorPercent = math.clamp((armorVal / 100) * 100, 0, 100)
+                
+                local barWidth = self.Settings.ArmorbarWidth
+                local barX = boxLeft - barWidth - 3
+                local barY = headScreen.Y
+                
+                if self.Settings.HealthbarVisible then
+                    barX = boxLeft - (self.Settings.HealthbarWidth) - 8
+                end
+                
+                local fillHeight = height * (armorPercent / 100)
                 
                 local data = self.Storage.Armorbars[other]
                 
-                data.Background.Size = UDim2.new(0, 3, 0, height)
+                data.Background.Size = UDim2.new(0, barWidth, 0, height)
                 data.Background.Position = UDim2.new(0, barX, 0, barY)
                 data.Background.Visible = true
                 
-                data.Fill.Size = UDim2.new(0, 3, 0, barHeight)
-                data.Fill.Position = UDim2.new(0, 0, 0, height - barHeight)
+                data.Fill.Size = UDim2.new(0, barWidth, 0, fillHeight)
+                data.Fill.Position = UDim2.new(0, 0, 0, height - fillHeight)
                 
                 if armorPercent > 0 then
-                    data.Text.Text = tostring(armorPercent)
-                    data.Text.Position = UDim2.new(0, barX - 20, 0, barY + height - barHeight - 6)
+                    data.Text.Text = math.floor(armorPercent) .. "%"
+                    data.Text.Position = UDim2.new(0, barX - 25, 0, barY + (height * (1 - armorPercent / 100)) - 8)
                     data.Text.Visible = true
                 else
                     data.Text.Visible = false
@@ -532,6 +593,7 @@ end
 function EspLib:ClearAll()
     for _, box in pairs(self.Storage.Boxes) do
         box.Main:Remove()
+        box.Outline:Remove()
         box.Fill:Destroy()
     end
     for _, tag in pairs(self.Storage.Nametags) do
@@ -565,12 +627,14 @@ function EspLib:Destroy()
     end
 end
 
-function EspLib:SetBox(enabled, color, filled, fillColor, transparency)
+function EspLib:SetBox(enabled, color, filled, fillColor, transparency, outline, outlineColor)
     self.Settings.BoxVisible = enabled
     if color then self.Settings.BoxColor = color end
     if filled ~= nil then self.Settings.BoxFilled = filled end
     if fillColor then self.Settings.BoxFillColor = fillColor end
     if transparency then self.Settings.BoxFillTransparency = transparency end
+    if outline ~= nil then self.Settings.BoxOutline = outline end
+    if outlineColor then self.Settings.BoxOutlineColor = outlineColor end
 end
 
 function EspLib:SetNametag(enabled, filled, fillTransparency, fillColor, textColor, outlineColor, fontSize, cornerRadius)
@@ -584,15 +648,17 @@ function EspLib:SetNametag(enabled, filled, fillTransparency, fillColor, textCol
     if cornerRadius then self.Settings.NametagCornerRadius = cornerRadius end
 end
 
-function EspLib:SetHealthbar(enabled, color1, color2, color3)
+function EspLib:SetHealthbar(enabled, width, color1, color2, color3)
     self.Settings.HealthbarVisible = enabled
+    if width then self.Settings.HealthbarWidth = width end
     if color1 then self.Settings.HealthbarColor1 = color1 end
     if color2 then self.Settings.HealthbarColor2 = color2 end
     if color3 then self.Settings.HealthbarColor3 = color3 end
 end
 
-function EspLib:SetArmorbar(enabled, color1, color2, color3)
+function EspLib:SetArmorbar(enabled, width, color1, color2, color3)
     self.Settings.ArmorbarVisible = enabled
+    if width then self.Settings.ArmorbarWidth = width end
     if color1 then self.Settings.ArmorbarColor1 = color1 end
     if color2 then self.Settings.ArmorbarColor2 = color2 end
     if color3 then self.Settings.ArmorbarColor3 = color3 end
@@ -625,6 +691,7 @@ function EspLib:Init()
         SafeExecute(function()
             if self.Storage.Boxes[removed] then
                 self.Storage.Boxes[removed].Main:Remove()
+                self.Storage.Boxes[removed].Outline:Remove()
                 self.Storage.Boxes[removed].Fill:Destroy()
                 self.Storage.Boxes[removed] = nil
             end
