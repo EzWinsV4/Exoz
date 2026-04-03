@@ -357,7 +357,6 @@ function EspLib:CreateArmorbar()
 		Background = Instance.new("Frame"),
 		Fill = Instance.new("Frame"),
 		Gradient = Instance.new("UIGradient"),
-		Text = Instance.new("TextLabel"),
 	}
 
 	bar.Background.Parent = self.Gui
@@ -378,22 +377,12 @@ function EspLib:CreateArmorbar()
 		ColorSequenceKeypoint.new(1, self.Settings.ArmorbarColor3),
 	})
 
-	bar.Text.Parent = self.Gui
-	bar.Text.BackgroundTransparency = 1
-	bar.Text.TextSize = 11
-	bar.Text.Font = Enum.Font.GothamBold
-	bar.Text.TextColor3 = Color3.fromRGB(135, 206, 235)
-	bar.Text.TextStrokeTransparency = 0
-	bar.Text.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
-	bar.Text.Visible = false
-
 	return bar
 end
 
 function EspLib:UpdateArmorbars()
 	for _, data in pairs(self.Storage.Armorbars) do
 		data.Background.Visible = false
-		data.Text.Visible = false
 	end
 
 	if not self.Settings.ArmorbarVisible then return end
@@ -435,12 +424,6 @@ function EspLib:UpdateArmorbars()
 			local fillH = height * (armorPct / 100)
 			data.Fill.Size = UDim2.new(1, 0, 0, fillH)
 			data.Fill.Position = UDim2.new(0, 0, 0, height - fillH)
-
-			if armorPct > 0 then
-				data.Text.Text = math.floor(armorPct) .. "%"
-				data.Text.Position = UDim2.new(0, barX - 25, 0, barY + height * (1 - armorPct / 100) - 8)
-				data.Text.Visible = true
-			end
 		end)
 	end
 end
@@ -508,7 +491,7 @@ function EspLib:ClearAll()
 	for _, box in pairs(self.Storage.Boxes) do DestroyBox(box) end
 	for _, tag in pairs(self.Storage.Nametags) do tag:Destroy() end
 	for _, bar in pairs(self.Storage.Healthbars) do bar.Background:Destroy() end
-	for _, bar in pairs(self.Storage.Armorbars) do bar.Background:Destroy(); bar.Text:Destroy() end
+	for _, bar in pairs(self.Storage.Armorbars) do bar.Background:Destroy(); end
 	for _, ring in pairs(self.Storage.Rings) do ring.Holder:Destroy() end
 
 	self.Storage.Boxes = {}
@@ -596,7 +579,6 @@ function EspLib:Init()
 			end
 			if self.Storage.Armorbars[removed] then
 				self.Storage.Armorbars[removed].Background:Destroy()
-				self.Storage.Armorbars[removed].Text:Destroy()
 				self.Storage.Armorbars[removed] = nil
 			end
 			if self.Storage.Rings[removed] then
