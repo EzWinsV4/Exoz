@@ -105,7 +105,7 @@ function EspLib:CreateBox()
 	box.Outline.Color = self.Settings.BoxOutlineColor
 	box.Outline.Filled = false
 	box.Outline.Visible = false
-	box.Outline.Transparency = 0
+	box.Outline.Transparency = 1
 
 	box.Fill.Filled = true
 	box.Fill.Color = self.Settings.BoxFillColor
