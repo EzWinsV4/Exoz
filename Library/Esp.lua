@@ -101,7 +101,7 @@ function EspLib:CreateBox()
 		Main = Drawing.new("Square"),
 	}
 
-	box.Outline.Thickness = 1
+	box.Outline.Thickness = 3
 	box.Outline.Color = self.Settings.BoxOutlineColor
 	box.Outline.Filled = false
 	box.Outline.Visible = false
@@ -113,7 +113,7 @@ function EspLib:CreateBox()
 	box.Fill.Visible = false
 	box.Fill.Thickness = 0
 
-	box.Main.Thickness = 1.5
+	box.Main.Thickness = 1
 	box.Main.Color = self.Settings.BoxColor
 	box.Main.Filled = false
 	box.Main.Visible = false
@@ -164,8 +164,8 @@ function EspLib:UpdateBoxes()
 			local box = self.Storage.Boxes[other]
 
 			if self.Settings.BoxOutline then
-				box.Outline.Size = Vector2.new(width + 4, height + 4)
-				box.Outline.Position = topLeft - Vector2.new(2, 2)
+				box.Outline.Size = Vector2.new(width, height)
+				box.Outline.Position = topLeft
 				box.Outline.Color = self.Settings.BoxOutlineColor
 				box.Outline.Visible = true
 			end
