@@ -28,14 +28,15 @@ EspLib.Settings = {
 	HealthbarVisible = false,
 	HealthbarSpeed = 0.2,
 	HealthbarWidth = 4,
-	HealthbarColor1 = Color3.fromRGB(0, 255, 0),
-	HealthbarColor2 = Color3.fromRGB(255, 255, 0),
-	HealthbarColor3 = Color3.fromRGB(255, 0, 0),
+	HealthbarColor1 = Color3.fromRGB(35, 120, 65),
+	HealthbarColor2 = Color3.fromRGB(255, 206, 8),
+	HealthbarColor3 = Color3.fromRGB(248, 150, 51),
+	HealthbarColor4 = Color3.fromRGB(221, 21, 51),
 	ArmorbarVisible = false,
 	ArmorbarWidth = 4,
-	ArmorbarColor1 = Color3.fromRGB(0, 0, 255),
-	ArmorbarColor2 = Color3.fromRGB(135, 206, 235),
-	ArmorbarColor3 = Color3.fromRGB(1, 0, 0),
+	ArmorbarColor1 = Color3.fromRGB(1, 31, 75),
+	ArmorbarColor2 = Color3.fromRGB(100, 151, 177),
+	ArmorbarColor3 = Color3.fromRGB(17, 17, 17),
 	RingVisible = false,
 	RingColor = Color3.fromRGB(255, 255, 255),
 	RingSpeed = 2.5,
@@ -296,8 +297,9 @@ function EspLib:CreateHealthbar()
 	bar.Gradient.Rotation = 90
 	bar.Gradient.Color = ColorSequence.new({
 		ColorSequenceKeypoint.new(0, self.Settings.HealthbarColor1),
-		ColorSequenceKeypoint.new(0.5, self.Settings.HealthbarColor2),
-		ColorSequenceKeypoint.new(1, self.Settings.HealthbarColor3),
+		ColorSequenceKeypoint.new(0.33, self.Settings.HealthbarColor2),
+		ColorSequenceKeypoint.new(0.66, self.Settings.HealthbarColor3),
+		ColorSequenceKeypoint.new(1, self.Settings.HealthbarColor4),
 	})
 
 	return bar
@@ -549,6 +551,7 @@ function EspLib:SetHealthbar(enabled, width, color1, color2, color3)
 	if color1 then self.Settings.HealthbarColor1 = color1 end
 	if color2 then self.Settings.HealthbarColor2 = color2 end
 	if color3 then self.Settings.HealthbarColor3 = color3 end
+	if color4 then self.Settings.HealthbarColor4 = color4 end
 end
 
 function EspLib:SetArmorbar(enabled, width, color1, color2, color3)
