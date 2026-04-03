@@ -3,7 +3,6 @@
 </p>
 <h1 align="center">👽 Exoz 👽</h1>
 
------------------
 ## 📜 | Script: 
 ```lua
 if not game:IsLoaded() then
