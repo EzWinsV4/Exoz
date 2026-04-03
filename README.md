@@ -18,8 +18,15 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/EzWinsV4/Exoz/refs/he
 - Lucky Block Battleground
 - Dahood (WORKING PROGRESS)
 -----------------
+
 ## ▶️ | Executors Supported:
-**PC Windows**  
+**Ratings:**
+`✅` = Works  
+`🟡` = Works but unstable  
+`🔴` = Most features won't work  
+`❔` = Unknown  
+
+**PC Windows:**  
 - `✅` Volt  
 - `✅` Potassium  
 - `✅` Wave  
@@ -34,20 +41,21 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/EzWinsV4/Exoz/refs/he
 - `🔴` Solara  
 - `🔴` Xeno  
 
-**PC Mac**  
+**PC Mac:**  
 - `🟡` Hydrogen  
 - `✅` MacSploit  
 - `✅` Opiumware  
 
-**Mobile Android**  
+**Mobile Android:**  
 - `✅` Delta  
 - `✅` Cryptic  
 - `❔` Vega X
 - `✅` CodeX  
 - `❔` Cubix *(likely works)*  
 
-**Mobile iOS**  
+**Mobile iOS:**  
 - `✅` Delta  
 - `✅` CodeX  
 
+*Untested executors are rated based on their UNC + sUNC results.*
 -----------------
