@@ -21,6 +21,7 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/EzWinsV4/Exoz/refs/he
 
 ## ▶️ | Executors Supported:
 **Ratings:**
+
 `✅` = Works  
 `🟡` = Works but unstable  
 `🔴` = Most features won't work  
