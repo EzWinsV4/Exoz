@@ -101,7 +101,7 @@ function EspLib:CreateBox()
 		Main = Drawing.new("Square"),
 	}
 
-	box.Outline.Thickness = 1
+	box.Outline.Thickness = 67
 	box.Outline.Color = self.Settings.BoxOutlineColor
 	box.Outline.Filled = false
 	box.Outline.Visible = false
