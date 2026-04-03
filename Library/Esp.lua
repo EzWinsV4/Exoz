@@ -54,7 +54,6 @@ EspLib.Storage = {
 local LocalPlayer = Players.LocalPlayer
 local CurrentCamera = Workspace.CurrentCamera
 local RenderConn = nil
-local CHAR_HALF_WIDTH = 1.5
 
 local function SafeExecute(func)
 	local ok, err = pcall(func)
@@ -71,24 +70,28 @@ local function LerpNumber(a, b, t)
 	return a + (b - a) * t
 end
 
-local function GetScreenBounds(root, head)
-	local headPos = head and head.Position or (root.Position + Vector3.new(0, 2.5, 0))
-	local feetPos = root.Position - Vector3.new(0, 3, 0)
+local function GetScreenBounds(char)
+	local minX, minY = math.huge, math.huge
+	local maxX, maxY = -math.huge, -math.huge
+	local found = false
 
-	local headScreen, headOn = CurrentCamera:WorldToViewportPoint(headPos)
-	local feetScreen, feetOn = CurrentCamera:WorldToViewportPoint(feetPos)
-	if not headOn or not feetOn then return nil end
+	for _, part in ipairs(char:GetChildren()) do
+		if part:IsA("BasePart") then
+			local screen, onScreen = CurrentCamera:WorldToViewportPoint(part.Position)
+			if onScreen then
+				found = true
+				if screen.X < minX then minX = screen.X end
+				if screen.Y < minY then minY = screen.Y end
+				if screen.X > maxX then maxX = screen.X end
+				if screen.Y > maxY then maxY = screen.Y end
+			end
+		end
+	end
 
-	local midWorld = (headPos + feetPos) * 0.5
-	local rightScreen = CurrentCamera:WorldToViewportPoint(midWorld + CurrentCamera.CFrame.RightVector * CHAR_HALF_WIDTH)
-	local leftScreen = CurrentCamera:WorldToViewportPoint(midWorld - CurrentCamera.CFrame.RightVector * CHAR_HALF_WIDTH)
+	if not found then return nil end
 
-	local height = math.abs(headScreen.Y - feetScreen.Y)
-	local width = math.max(math.abs(rightScreen.X - leftScreen.X), height * 0.3)
-	local topY = math.min(headScreen.Y, feetScreen.Y)
-	local centerX = (headScreen.X + feetScreen.X) * 0.5
-
-	return Vector2.new(centerX - width * 0.5, topY), width, height
+	local pad = 6
+	return Vector2.new(minX - pad, minY - pad), (maxX - minX) + pad * 2, (maxY - minY) + pad * 2
 end
 
 function EspLib:CreateBox()
@@ -98,7 +101,7 @@ function EspLib:CreateBox()
 		Main = Drawing.new("Square"),
 	}
 
-	box.Outline.Thickness = 3
+	box.Outline.Thickness = 1
 	box.Outline.Color = self.Settings.BoxOutlineColor
 	box.Outline.Filled = false
 	box.Outline.Visible = false
@@ -155,15 +158,14 @@ function EspLib:UpdateBoxes()
 				self.Storage.Boxes[other] = self:CreateBox()
 			end
 
-			local head = char:FindFirstChild("Head")
-			local topLeft, width, height = GetScreenBounds(root, head)
+			local topLeft, width, height = GetScreenBounds(char)
 			if not topLeft then return end
 
 			local box = self.Storage.Boxes[other]
 
 			if self.Settings.BoxOutline then
-				box.Outline.Size = Vector2.new(width + 2, height + 2)
-				box.Outline.Position = topLeft - Vector2.new(1, 1)
+				box.Outline.Size = Vector2.new(width + 4, height + 4)
+				box.Outline.Position = topLeft - Vector2.new(2, 2)
 				box.Outline.Color = self.Settings.BoxOutlineColor
 				box.Outline.Visible = true
 			end
@@ -273,7 +275,6 @@ function EspLib:CreateHealthbar()
 		Background = Instance.new("Frame"),
 		Fill = Instance.new("Frame"),
 		Gradient = Instance.new("UIGradient"),
-		Text = Instance.new("TextLabel"),
 		Current = 100,
 		Target = 100
 	}
@@ -296,22 +297,12 @@ function EspLib:CreateHealthbar()
 		ColorSequenceKeypoint.new(1, self.Settings.HealthbarColor3),
 	})
 
-	bar.Text.Parent = self.Gui
-	bar.Text.BackgroundTransparency = 1
-	bar.Text.TextSize = 11
-	bar.Text.Font = Enum.Font.GothamBold
-	bar.Text.TextColor3 = Color3.fromRGB(255, 255, 255)
-	bar.Text.TextStrokeTransparency = 0
-	bar.Text.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
-	bar.Text.Visible = false
-
 	return bar
 end
 
 function EspLib:UpdateHealthbars()
 	for _, data in pairs(self.Storage.Healthbars) do
 		data.Background.Visible = false
-		data.Text.Visible = false
 	end
 
 	if not self.Settings.HealthbarVisible then return end
@@ -333,8 +324,7 @@ function EspLib:UpdateHealthbars()
 				self.Storage.Healthbars[other] = self:CreateHealthbar()
 			end
 
-			local head = char:FindFirstChild("Head")
-			local topLeft, width, height = GetScreenBounds(root, head)
+			local topLeft, width, height = GetScreenBounds(char)
 			if not topLeft then return end
 
 			local barWidth = self.Settings.HealthbarWidth
@@ -353,10 +343,6 @@ function EspLib:UpdateHealthbars()
 			local fillH = height * (data.Current / 100)
 			data.Fill.Size = UDim2.new(1, 0, 0, fillH)
 			data.Fill.Position = UDim2.new(0, 0, 0, height - fillH)
-
-			data.Text.Text = math.floor(healthPercent) .. "%"
-			data.Text.Position = UDim2.new(0, barX - 25, 0, barY + height * (1 - healthPercent / 100) - 8)
-			data.Text.Visible = true
 		end)
 	end
 end
@@ -424,8 +410,7 @@ function EspLib:UpdateArmorbars()
 				self.Storage.Armorbars[other] = self:CreateArmorbar()
 			end
 
-			local head = char:FindFirstChild("Head")
-			local topLeft, width, height = GetScreenBounds(root, head)
+			local topLeft, width, height = GetScreenBounds(char)
 			if not topLeft then return end
 
 			local bodyEffects = char:FindFirstChild("BodyEffects")
@@ -517,7 +502,7 @@ end
 function EspLib:ClearAll()
 	for _, box in pairs(self.Storage.Boxes) do DestroyBox(box) end
 	for _, tag in pairs(self.Storage.Nametags) do tag:Destroy() end
-	for _, bar in pairs(self.Storage.Healthbars) do bar.Background:Destroy(); bar.Text:Destroy() end
+	for _, bar in pairs(self.Storage.Healthbars) do bar.Background:Destroy() end
 	for _, bar in pairs(self.Storage.Armorbars) do bar.Background:Destroy(); bar.Text:Destroy() end
 	for _, ring in pairs(self.Storage.Rings) do ring.Holder:Destroy() end
 
@@ -601,7 +586,6 @@ function EspLib:Init()
 			end
 			if self.Storage.Healthbars[removed] then
 				self.Storage.Healthbars[removed].Background:Destroy()
-				self.Storage.Healthbars[removed].Text:Destroy()
 				self.Storage.Healthbars[removed] = nil
 			end
 			if self.Storage.Armorbars[removed] then
