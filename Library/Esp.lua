@@ -9,11 +9,20 @@ EspLib.Settings = {
     TeamCheck = true,
     MaxDistance = 1000,
     BoxVisible = false,
-    BoxColor = Color3.new(0.403922, 0.34902, 0.701961),
+    BoxColor = Color3.new(1, 1, 1),
     BoxFilled = false,
-    BoxFillColor = Color3.new(0.403922, 0.34902, 0.701961),
+    BoxFillColor = Color3.new(0, 0, 0),
     BoxFillTransparency = 0.5,
     NametagVisible = false,
+    NametagFilled = true,
+    NametagFillTransparency = 0.5,
+    NametagFillColor = Color3.fromRGB(0, 0, 0),
+    NametagTextColor = Color3.fromRGB(255, 255, 255),
+    NametagOutline = true,
+    NametagOutlineColor = Color3.fromRGB(0, 0, 0),
+    NametagFont = Enum.Font.GothamBold,
+    NametagSize = 14,
+    NametagCornerRadius = 8,
     HealthbarVisible = false,
     HealthbarSpeed = 0.2,
     HealthbarColor1 = Color3.fromRGB(0, 255, 0),
@@ -148,18 +157,19 @@ end
 function EspLib:CreateNametag(target)
     local tag = Instance.new("TextLabel")
     tag.Parent = self.Gui
-    tag.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-    tag.BackgroundTransparency = 0.5
-    tag.TextColor3 = Color3.fromRGB(255, 255, 255)
+    tag.BackgroundColor3 = self.Settings.NametagFillColor
+    tag.BackgroundTransparency = self.Settings.NametagFillTransparency
+    tag.TextColor3 = self.Settings.NametagTextColor
     tag.TextStrokeTransparency = 0
-    tag.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
-    tag.Font = Enum.Font.GothamBold
-    tag.TextSize = 14
-    tag.Size = UDim2.new(0, 100, 0, 20)
+    tag.TextStrokeColor3 = self.Settings.NametagOutlineColor
+    tag.Font = self.Settings.NametagFont
+    tag.TextSize = self.Settings.NametagSize
     tag.BorderSizePixel = 0
+    tag.TextXAlignment = Enum.TextXAlignment.Center
+    tag.TextYAlignment = Enum.TextYAlignment.Center
     
     local corners = Instance.new("UICorner")
-    corners.CornerRadius = UDim.new(0, 8)
+    corners.CornerRadius = UDim.new(0, self.Settings.NametagCornerRadius)
     corners.Parent = tag
     
     return tag
@@ -203,9 +213,30 @@ function EspLib:UpdateNametags()
                 
                 if onScreen then
                     local tag = self.Storage.Nametags[other]
-                    tag.Text = other.Name
-                    tag.Position = UDim2.new(0, screenPos.X - 50, 0, screenPos.Y - 30)
+                    local nameText = other.Name
+                    
+                    local textBounds = {}
+                    local textWidth = #nameText * (self.Settings.NametagSize * 0.6)
+                    local textHeight = self.Settings.NametagSize * 1.5
+                    
+                    local paddingX = 16
+                    local paddingY = 6
+                    
+                    local finalWidth = textWidth + paddingX
+                    local finalHeight = textHeight + paddingY
+                    
+                    tag.Text = nameText
+                    tag.Size = UDim2.new(0, finalWidth, 0, finalHeight)
+                    tag.Position = UDim2.new(0, screenPos.X - (finalWidth / 2), 0, screenPos.Y - finalHeight - 5)
+                    tag.BackgroundTransparency = self.Settings.NametagFillTransparency
+                    tag.BackgroundColor3 = self.Settings.NametagFillColor
+                    tag.TextColor3 = self.Settings.NametagTextColor
+                    tag.TextSize = self.Settings.NametagSize
                     tag.Visible = true
+                    
+                    if not self.Settings.NametagFilled then
+                        tag.BackgroundTransparency = 1
+                    end
                 else
                     self.Storage.Nametags[other].Visible = false
                 end
@@ -542,8 +573,15 @@ function EspLib:SetBox(enabled, color, filled, fillColor, transparency)
     if transparency then self.Settings.BoxFillTransparency = transparency end
 end
 
-function EspLib:SetNametag(enabled)
+function EspLib:SetNametag(enabled, filled, fillTransparency, fillColor, textColor, outlineColor, fontSize, cornerRadius)
     self.Settings.NametagVisible = enabled
+    if filled ~= nil then self.Settings.NametagFilled = filled end
+    if fillTransparency then self.Settings.NametagFillTransparency = fillTransparency end
+    if fillColor then self.Settings.NametagFillColor = fillColor end
+    if textColor then self.Settings.NametagTextColor = textColor end
+    if outlineColor then self.Settings.NametagOutlineColor = outlineColor end
+    if fontSize then self.Settings.NametagSize = fontSize end
+    if cornerRadius then self.Settings.NametagCornerRadius = cornerRadius end
 end
 
 function EspLib:SetHealthbar(enabled, color1, color2, color3)
