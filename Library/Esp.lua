@@ -248,7 +248,7 @@ function EspLib:UpdateNametags()
 			if not onScreen then return end
 
 			local tag = self.Storage.Nametags[other]
-			local nameText = other.DisplayName
+			local nameText = other.Name
 			local textWidth = #nameText * (self.Settings.NametagSize * 0.55)
 			local textHeight = self.Settings.NametagSize * 1.5
 			local finalW = textWidth + 16
