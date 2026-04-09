@@ -1,4 +1,5 @@
 -- Dahood patched every silent aim method, enjoy this shit script with no silent aim.
+
 if not game:IsLoaded() then
     game.Loaded:Wait()
 end
@@ -232,7 +233,6 @@ local exoz = {
         Up = false,
         Down = false,
     },
-    RapidFire = {},
     ESP = {
         Enabled = false,
         Box = {
@@ -468,7 +468,16 @@ getgenv().ExozFlyConnection = RunService.Heartbeat:Connect(function(delta)
 end)
 
 local RapidFireSection = Tabs.Combat:AddSection("Rapid Fire")
-RapidFireSection:AddParagraph({Title = "Note:", Content = "Rapid fire will be made when i get a better exec"})
+
+RapidFireSection:AddToggle("RapidFireToggle", {
+    Title = "Rapid Fire",
+    Default = false,
+    Callback = function(v)
+        if v then
+            Notify("Exoz", "Scammer get scammed >.<", 7)
+        end
+    end
+})
 
 local WallbangSection = Tabs.Combat:AddSection("Wallbang")
 
