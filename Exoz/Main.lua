@@ -36,7 +36,10 @@ local Exoz = {
     ["Lucky Block Battleground"] = {
         games = {662417684, 106931261124996},
         url = "https://raw.githubusercontent.com/EzWinsV4/Exoz/refs/heads/main/Exoz/LuckyBlockBattleground.lua"
-    }
+    },
+    ["Dahood"] = {
+        games = {2788229376},
+        url = "https://raw.githubusercontent.com/EzWinsV4/Exoz/refs/heads/main/Exoz/Dahood.lua"
 }
 
 local currentGameId = game.PlaceId
