@@ -40,6 +40,7 @@ local Exoz = {
     ["Dahood"] = {
         games = {2788229376},
         url = "https://raw.githubusercontent.com/EzWinsV4/Exoz/refs/heads/main/Exoz/Dahood.lua"
+    }
 }
 
 local currentGameId = game.PlaceId
