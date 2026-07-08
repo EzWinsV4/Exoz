@@ -1,3 +1,5 @@
+local MacLib = loadstring(game:HttpGet("https://github.com/biggaboy212/Maclib/releases/latest/download/maclib.txt"))()
+
 if not game:IsLoaded() then
     game.Loaded:Wait()
 end
@@ -8,10 +10,6 @@ pcall(function() if getgenv().ExozNoclipConnection then getgenv().ExozNoclipConn
 pcall(function() if getgenv().ExozGravityConnection then getgenv().ExozGravityConnection:Disconnect() getgenv().ExozGravityConnection = nil end end)
 pcall(function() if getgenv().ExozInfJumpConnection then getgenv().ExozInfJumpConnection:Disconnect() getgenv().ExozInfJumpConnection = nil end end)
 pcall(function() if getgenv().ExozFlyConnection then getgenv().ExozFlyConnection:Disconnect() getgenv().ExozFlyConnection = nil end end)
-
-local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
-local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/SaveManager.lua"))()
-local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/InterfaceManager.lua"))()
 
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
@@ -88,25 +86,51 @@ local exoz = {
 
 local gameName = "Lucky Block Battlegrounds"
 local discord = "https://discord.com/invite/7DVEpdpsyf"
-local theme = "Rose"
 local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:FindFirstChildOfClass("Humanoid")
-local backpack = player:WaitForChild("Backpack")
-local mouse = player:GetMouse()
 
-local Window = Fluent:CreateWindow({
+local Window = MacLib:Window({
     Title = "Exoz",
-    SubTitle = gameName,
-    TabWidth = 140,
-    Size = UDim2.fromOffset(780, 460),
-    Acrylic = false,
-    Theme = theme,
-    MinimizeKey = Enum.KeyCode.RightControl
+    Subtitle = gameName,
+    Size = UDim2.fromOffset(780, 570),
+    DragStyle = 1,
+    DisabledWindowControls = {},
+    ShowUserInfo = true,
+    Keybind = Enum.KeyCode.RightControl,
+    AcrylicBlur = true,
 })
 
+local globalSettings = {
+    UIBlur = Window:GlobalSetting({
+        Name = "UI Blur",
+        Default = Window:GetAcrylicBlurState(),
+        Callback = function(bool)
+            Window:SetAcrylicBlurState(bool)
+        end
+    }),
+    Notifications = Window:GlobalSetting({
+        Name = "Notifications",
+        Default = Window:GetNotificationsState(),
+        Callback = function(bool)
+            Window:SetNotificationsState(bool)
+        end
+    }),
+    ShowUserInfo = Window:GlobalSetting({
+        Name = "Show User Info",
+        Default = Window:GetUserInfoState(),
+        Callback = function(bool)
+            Window:SetUserInfoState(bool)
+        end
+    })
+}
+
 local function Notify(title, desc, time)
-    Fluent:Notify({Title = title, Content = desc, Duration = time or 5})
+    Window:Notify({
+        Title = title,
+        Description = desc,
+        Lifetime = time or 5
+    })
 end
 
 local function teleportTo(location)
@@ -120,19 +144,39 @@ for _, location in ipairs(exoz.LuckyBlockBattlegrounds.Locations) do
     table.insert(locationNames, location.name)
 end
 
-local Tabs = {
-    Main = Window:AddTab({Title = "Main", Icon = "skull"}),
-    Visuals = Window:AddTab({Title = "Visuals", Icon = "eye"}),
-    Utility = Window:AddTab({Title = "Utility", Icon = "wrench"}),
-    Credits = Window:AddTab({Title = "Credits", Icon = "code"}),
-    Settings = Window:AddTab({Title = "Settings", Icon = "settings"})
+local tabGroups = {
+    TabGroup1 = Window:TabGroup(),
+    TabGroup2 = Window:TabGroup()
 }
 
-Tabs.Credits:AddParagraph({Title = "Credits:", Content = ".vnpr"})
-Tabs.Credits:AddParagraph({Title = "Join The Discord", Content = discord})
-Tabs.Credits:AddButton({
-    Title = "Copy Link",
-    Description = "Click here to copy Discord invite link.",
+local tabs = {
+    Main = tabGroups.TabGroup1:Tab({ Name = "Main", Image = "rbxassetid://101060850237115" }),
+    Visuals = tabGroups.TabGroup1:Tab({ Name = "Visuals", Image = "rbxassetid://127234874352422" }),
+    Utility = tabGroups.TabGroup1:Tab({ Name = "Utility", Image = "rbxassetid://85345725497834" }),
+    Credits = tabGroups.TabGroup2:Tab({ Name = "Credits", Image = "rbxassetid://75851496262862" }),
+    Settings = tabGroups.TabGroup2:Tab({ Name = "Settings", Image = "rbxassetid://10734950309" })
+}
+
+local sections = {
+    Speed = tabs.Main:Section({ Side = "Left" }),
+    JumpPower = tabs.Main:Section({ Side = "Right" }),
+    Noclip = tabs.Main:Section({ Side = "Left" }),
+    Gravity = tabs.Main:Section({ Side = "Right" }),
+    InfiniteJump = tabs.Main:Section({ Side = "Left" }),
+    Fly = tabs.Main:Section({ Side = "Right" }),
+    ESP = tabs.Visuals:Section({ Side = "Left" }),
+    Highlights = tabs.Visuals:Section({ Side = "Right" }),
+    Teleports = tabs.Utility:Section({ Side = "Left" }),
+    Blocks = tabs.Utility:Section({ Side = "Right" }),
+    Credits = tabs.Credits:Section({ Side = "Left" }),
+    Discord = tabs.Credits:Section({ Side = "Right" })
+}
+
+sections.Credits:Header({ Name = "Credits" })
+sections.Credits:Paragraph({ Header = "Developers", Body = ".vnpr\nflamesiscoolz" })
+sections.Discord:Paragraph({ Header = "Join The Discord", Body = discord })
+sections.Discord:Button({
+    Name = "Copy Link",
     Callback = function()
         if setclipboard then
             setclipboard(discord)
@@ -143,27 +187,28 @@ Tabs.Credits:AddButton({
     end
 })
 
-local SpeedSection = Tabs.Main:AddSection("Speed")
+sections.Speed:Header({ Name = "Speed" })
 
-SpeedSection:AddToggle("SpeedToggle", {
-    Title = "Speed",
+sections.Speed:Toggle({
+    Name = "Speed",
     Default = false,
     Callback = function(Value)
         exoz.Speed.Enabled = Value
         Notify("Exoz", "Speed toggled " .. (Value and "on" or "off"), 2)
     end
-})
+}, "SpeedToggle")
 
-SpeedSection:AddSlider("SpeedSlider", {
-    Title = "Speed Slider",
-    Min = 16,
-    Max = 500,
+sections.Speed:Slider({
+    Name = "Speed Slider",
     Default = 16,
-    Rounding = 1,
+    Minimum = 16,
+    Maximum = 500,
+    DisplayMethod = "Number",
+    Precision = 1,
     Callback = function(Value)
         exoz.Speed.Value = Value
     end
-})
+}, "SpeedSlider")
 
 getgenv().ExozSpeedConnection = RunService.Heartbeat:Connect(function()
     if humanoid then 
@@ -171,27 +216,28 @@ getgenv().ExozSpeedConnection = RunService.Heartbeat:Connect(function()
     end
 end)
 
-local JumpPowerSection = Tabs.Main:AddSection("Jump Power")
+sections.JumpPower:Header({ Name = "Jump Power" })
 
-JumpPowerSection:AddToggle("JumpPowerToggle", {
-    Title = "Jump Power",
+sections.JumpPower:Toggle({
+    Name = "Jump Power",
     Default = false,
     Callback = function(Value)
         exoz.JumpPower.Enabled = Value
         Notify("Exoz", "Jump power toggled " .. (Value and "on" or "off"), 2)
     end
-})
+}, "JumpPowerToggle")
 
-JumpPowerSection:AddSlider("JumpPowerSlider", {
-    Title = "Jump Power Slider",
-    Min = 50.145,
-    Max = 1000,
+sections.JumpPower:Slider({
+    Name = "Jump Power Slider",
     Default = 50.145,
-    Rounding = 1,
+    Minimum = 50.145,
+    Maximum = 1000,
+    DisplayMethod = "Number",
+    Precision = 1,
     Callback = function(Value)
         exoz.JumpPower.Value = Value
     end
-})
+}, "JumpPowerSlider")
 
 getgenv().ExozJumpPowerConnection = RunService.Heartbeat:Connect(function()
     if player.Character and player.Character:FindFirstChildOfClass("Humanoid") then
@@ -224,16 +270,16 @@ player.CharacterAdded:Connect(function(char)
     end
 end)
 
-local NoclipSection = Tabs.Main:AddSection("Noclip")
+sections.Noclip:Header({ Name = "Noclip" })
 
-NoclipSection:AddToggle("NoClip", {
-    Title = "NoClip",
+sections.Noclip:Toggle({
+    Name = "NoClip",
     Default = false,
     Callback = function(Value)
         exoz.Noclip.Enabled = Value
         Notify("Exoz", "Noclip toggled " .. (Value and "on" or "off"), 2)
     end
-})
+}, "NoClip")
 
 getgenv().ExozNoclipConnection = RunService.Stepped:Connect(function()
     if exoz.Noclip.Enabled and player.Character then
@@ -245,10 +291,10 @@ getgenv().ExozNoclipConnection = RunService.Stepped:Connect(function()
     end
 end)
 
-local GravitySection = Tabs.Main:AddSection("Gravity")
+sections.Gravity:Header({ Name = "Gravity" })
 
-GravitySection:AddToggle("GravityToggle", {
-    Title = "Gravity",
+sections.Gravity:Toggle({
+    Name = "Gravity",
     Default = false,
     Callback = function(Value)
         exoz.Gravity.Enabled = Value
@@ -257,18 +303,19 @@ GravitySection:AddToggle("GravityToggle", {
             workspace.Gravity = 196.2 
         end
     end
-})
+}, "GravityToggle")
 
-GravitySection:AddSlider("GravitySlider", {
-    Title = "Gravity Value",
-    Min = 0,
-    Max = 196.2,
+sections.Gravity:Slider({
+    Name = "Gravity Value",
     Default = workspace.Gravity,
-    Rounding = 0.1,
+    Minimum = 0,
+    Maximum = 196.2,
+    DisplayMethod = "Number",
+    Precision = 1,
     Callback = function(Value)
         exoz.Gravity.Value = Value
     end
-})
+}, "GravitySlider")
 
 getgenv().ExozGravityConnection = RunService.Heartbeat:Connect(function()
     if exoz.Gravity.Enabled then 
@@ -276,16 +323,16 @@ getgenv().ExozGravityConnection = RunService.Heartbeat:Connect(function()
     end
 end)
 
-local InfJumpSection = Tabs.Main:AddSection("Infinite Jump")
+sections.InfiniteJump:Header({ Name = "Infinite Jump" })
 
-InfJumpSection:AddToggle("InfJumpToggle", {
-    Title = "Infinite Jump",
+sections.InfiniteJump:Toggle({
+    Name = "Infinite Jump",
     Default = false,
     Callback = function(Value)
         exoz.InfiniteJump.Enabled = Value
         Notify("Exoz", "Infinite Jump toggled " .. (Value and "on" or "off"), 2)
     end
-})
+}, "InfJumpToggle")
 
 getgenv().ExozInfJumpConnection = UserInputService.JumpRequest:Connect(function()
     if exoz.InfiniteJump.Enabled then
@@ -296,10 +343,10 @@ getgenv().ExozInfJumpConnection = UserInputService.JumpRequest:Connect(function(
     end
 end)
 
-local FlySection = Tabs.Main:AddSection("Fly")
+sections.Fly:Header({ Name = "Fly" })
 
-FlySection:AddToggle("FlyToggle", {
-    Title = "Fly",
+sections.Fly:Toggle({
+    Name = "Fly",
     Default = false,
     Callback = function(Value)
         local plr = Players.LocalPlayer
@@ -368,23 +415,24 @@ FlySection:AddToggle("FlyToggle", {
             if humanoid then humanoid.PlatformStand = false end
         end
     end
-})
+}, "FlyToggle")
 
-FlySection:AddSlider("FlySpeedSlider", {
-    Title = "Fly Speed",
-    Min = 1,
-    Max = 100,
+sections.Fly:Slider({
+    Name = "Fly Speed",
     Default = 10,
-    Rounding = 1,
+    Minimum = 1,
+    Maximum = 100,
+    DisplayMethod = "Number",
+    Precision = 1,
     Callback = function(Value)
         exoz.Fly.Speed = Value * 4
     end
-})
+}, "FlySpeedSlider")
 
-local ESPSection = Tabs.Visuals:AddSection("ESP")
+sections.ESP:Header({ Name = "ESP" })
 
-ESPSection:AddToggle("ESPToggle", {
-    Title = "ESP",
+sections.ESP:Toggle({
+    Name = "ESP",
     Default = false,
     Callback = function(Value)
         if not getgenv().ExozESPConnections then getgenv().ExozESPConnections = {} end
@@ -546,28 +594,28 @@ ESPSection:AddToggle("ESPToggle", {
             end
         end)
     end
-})
+}, "ESPToggle")
 
-ESPSection:AddToggle("HealthbarToggle", {
-    Title = "Health Bars",
+sections.ESP:Toggle({
+    Name = "Health Bars",
     Default = false,
     Callback = function(Value)
         exoz.Esp.Healthbar = Value
     end
-})
+}, "HealthbarToggle")
 
-ESPSection:AddColorpicker("ESPCustomisationPicker", {
-    Title = "ESP Color",
+sections.ESP:Colorpicker({
+    Name = "ESP Color",
     Default = exoz.Esp.Color,
     Callback = function(Value)
         exoz.Esp.Color = Value
     end
-})
+}, "ESPCustomisationPicker")
 
-local HighlightsSection = Tabs.Visuals:AddSection("Highlights")
+sections.Highlights:Header({ Name = "Highlights" })
 
-HighlightsSection:AddToggle("HighlightToggle", {
-    Title = "Highlight ESP",
+sections.Highlights:Toggle({
+    Name = "Highlight ESP",
     Default = false,
     Callback = function(Value)
         exoz.Highlight.Enabled = Value
@@ -609,49 +657,49 @@ HighlightsSection:AddToggle("HighlightToggle", {
             end
         end)
     end
-})
+}, "HighlightToggle")
 
-HighlightsSection:AddColorpicker("HighlightFillColorPicker", {
-    Title = "Highlight Fill Color",
+sections.Highlights:Colorpicker({
+    Name = "Highlight Fill Color",
     Default = exoz.Highlight.Fill.Color,
     Callback = function(Value)
         exoz.Highlight.Fill.Color = Value
         for _, h in pairs(exoz.Highlight.Objects) do if h then h.FillColor = exoz.Highlight.Fill.Color end end
     end
-})
+}, "HighlightFillColorPicker")
 
-HighlightsSection:AddColorpicker("HighlightOutlineColorPicker", {
-    Title = "Highlight Outline Color",
+sections.Highlights:Colorpicker({
+    Name = "Highlight Outline Color",
     Default = exoz.Highlight.Outline.Color,
     Callback = function(Value)
         exoz.Highlight.Outline.Color = Value
         for _, h in pairs(exoz.Highlight.Objects) do if h then h.OutlineColor = exoz.Highlight.Outline.Color end end
     end
-})
+}, "HighlightOutlineColorPicker")
 
-local TeleportsSection = Tabs.Utility:AddSection("Teleports")
+sections.Teleports:Header({ Name = "Teleports" })
 
-local TeleportDropdown = Tabs.Utility:AddDropdown("TeleportDropdown", {
-    Title = "Teleport",
-    Values = locationNames,
+local TeleportDropdown = sections.Teleports:Dropdown({
+    Name = "Teleport",
     Multi = false,
+    Required = true,
+    Options = locationNames,
     Default = 1,
-})
-TeleportDropdown:SetValue(locationNames[1])
-TeleportDropdown:OnChanged(function(Value)
-    for _, location in ipairs(exoz.LuckyBlockBattlegrounds.Locations) do
-        if location.name == Value then
-            teleportTo(location.position)
-            break
+    Callback = function(Value)
+        for _, location in ipairs(exoz.LuckyBlockBattlegrounds.Locations) do
+            if location.name == Value then
+                teleportTo(location.position)
+                break
+            end
         end
     end
-end)
+}, "TeleportDropdown")
 
-local BlocksSection = Tabs.Utility:AddSection("Blocks")
+sections.Blocks:Header({ Name = "Blocks" })
 
 for _, block in ipairs(exoz.LuckyBlockBattlegrounds.Blocks) do
-    BlocksSection:AddButton({
-        Title = "Spawn " .. block.Name,
+    sections.Blocks:Button({
+        Name = "Spawn " .. block.Name,
         Callback = function()
             if block.Event then
                 block.Event:FireServer()
@@ -662,19 +710,24 @@ for _, block in ipairs(exoz.LuckyBlockBattlegrounds.Blocks) do
     })
 end
 
-BlocksSection:AddParagraph({
-    Title = "Note",
-    Content = "Lucky blocks with higher value than Galaxy cannot be spawned. I am trying to figure out how to spawn them."
+sections.Blocks:Paragraph({
+    Header = "Note",
+    Body = "Lucky blocks with higher value than Galaxy cannot be spawned. I am trying to figure out how to spawn them."
 })
 
-SaveManager:SetLibrary(Fluent)
-InterfaceManager:SetLibrary(Fluent)
-SaveManager:IgnoreThemeSettings()
-SaveManager:SetIgnoreIndexes({})
-InterfaceManager:SetFolder("Exoz")
-SaveManager:SetFolder("Exoz/".. gameName)
-InterfaceManager:BuildInterfaceSection(Tabs.Settings)
-SaveManager:BuildConfigSection(Tabs.Settings)
-Window:SelectTab(1)
-Notify("Exoz", "Loaded".. gameName .. " script successfully.")
-SaveManager:LoadAutoloadConfig()
+tabs.Settings:InsertConfigSection("Left")
+
+Window.onUnloaded(function()
+    pcall(function() if getgenv().ExozSpeedConnection then getgenv().ExozSpeedConnection:Disconnect() end end)
+    pcall(function() if getgenv().ExozJumpPowerConnection then getgenv().ExozJumpPowerConnection:Disconnect() end end)
+    pcall(function() if getgenv().ExozNoclipConnection then getgenv().ExozNoclipConnection:Disconnect() end end)
+    pcall(function() if getgenv().ExozGravityConnection then getgenv().ExozGravityConnection:Disconnect() end end)
+    pcall(function() if getgenv().ExozInfJumpConnection then getgenv().ExozInfJumpConnection:Disconnect() end end)
+    pcall(function() if getgenv().ExozFlyConnection then getgenv().ExozFlyConnection:Disconnect() end end)
+end)
+
+tabs.Main:Select()
+MacLib:SetFolder("Exoz/" .. gameName)
+MacLib:LoadAutoLoadConfig()
+
+Notify("Exoz", "Loaded ".. gameName .. " script successfully.")
