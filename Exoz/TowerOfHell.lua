@@ -1,10 +1,12 @@
+local MacLib = loadstring(game:HttpGet("https://github.com/biggaboy212/Maclib/releases/latest/download/maclib.txt"))()
+
 if not game:IsLoaded() then
     game.Loaded:Wait()
 end
 
 local function cleanupConnections()
     local connections = {
-        "ExozSpeedConnection",
+        "ExozSpeedConnection", 
         "ExozJumpPowerConnection", 
         "ExozInfJumpConnection", 
         "ExozGodmodeConnection",
@@ -24,11 +26,6 @@ end
 
 cleanupConnections()
 
-local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
-local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/SaveManager.lua"))()
-local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/InterfaceManager.lua"))()
-local Options = Fluent.Options
-
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local Lighting = game:GetService("Lighting")
@@ -40,7 +37,6 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local gameName = "Tower of Hell"
 local discord = "https://discord.com/invite/7DVEpdpsyf"
-local theme = "Rose"
 local player = Players.LocalPlayer
 
 local exoz = {
@@ -104,18 +100,47 @@ local exoz = {
     }
 }
 
-local Window = Fluent:CreateWindow({
+local Window = MacLib:Window({
     Title = "Exoz",
-    SubTitle = gameName,
-    TabWidth = 140,
-    Size = UDim2.fromOffset(780, 460),
-    Acrylic = false,
-    Theme = theme,
-    MinimizeKey = Enum.KeyCode.RightControl
+    Subtitle = gameName,
+    Size = UDim2.fromOffset(780, 570),
+    DragStyle = 1,
+    DisabledWindowControls = {},
+    ShowUserInfo = true,
+    Keybind = Enum.KeyCode.RightControl,
+    AcrylicBlur = true,
 })
 
+local globalSettings = {
+    UIBlur = Window:GlobalSetting({
+        Name = "UI Blur",
+        Default = Window:GetAcrylicBlurState(),
+        Callback = function(bool)
+            Window:SetAcrylicBlurState(bool)
+        end
+    }),
+    Notifications = Window:GlobalSetting({
+        Name = "Notifications",
+        Default = Window:GetNotificationsState(),
+        Callback = function(bool)
+            Window:SetNotificationsState(bool)
+        end
+    }),
+    ShowUserInfo = Window:GlobalSetting({
+        Name = "Show User Info",
+        Default = Window:GetUserInfoState(),
+        Callback = function(bool)
+            Window:SetUserInfoState(bool)
+        end
+    })
+}
+
 local function Notify(title, desc, time)
-    Fluent:Notify({Title = title, Content = desc, Duration = time or 5})
+    Window:Notify({
+        Title = title,
+        Description = desc,
+        Lifetime = time or 5
+    })
 end
 
 local function getHumanoid()
@@ -216,19 +241,37 @@ local function handleInfiniteJump()
     end)
 end
 
-local Tabs = {
-    Main = Window:AddTab({Title = "Main", Icon = "skull"}),
-    Visuals = Window:AddTab({Title = "Visuals", Icon = "eye"}),
-    Utility = Window:AddTab({Title = "Utility", Icon = "wrench"}),
-    Credits = Window:AddTab({Title = "Credits", Icon = "code"}),
-    Settings = Window:AddTab({Title = "Settings", Icon = "settings"})
+local tabGroups = {
+    TabGroup1 = Window:TabGroup(),
+    TabGroup2 = Window:TabGroup()
 }
 
-Tabs.Credits:AddParagraph({Title = "Credits:", Content = ".vnpr"})
-Tabs.Credits:AddParagraph({Title = "Join The Discord", Content = discord})
-Tabs.Credits:AddButton({
-    Title = "Copy Link",
-    Description = "Click here to copy Discord invite link.",
+local tabs = {
+    Main = tabGroups.TabGroup1:Tab({ Name = "Main", Image = "rbxassetid://101060850237115" }),
+    Visuals = tabGroups.TabGroup1:Tab({ Name = "Visuals", Image = "rbxassetid://127234874352422" }),
+    Utility = tabGroups.TabGroup1:Tab({ Name = "Utility", Image = "rbxassetid://85345725497834" }),
+    Credits = tabGroups.TabGroup2:Tab({ Name = "Credits", Image = "rbxassetid://75851496262862" }),
+    Settings = tabGroups.TabGroup2:Tab({ Name = "Settings", Image = "rbxassetid://10734950309" })
+}
+
+local sections = {
+    Speed = tabs.Main:Section({ Side = "Left" }),
+    JumpPower = tabs.Main:Section({ Side = "Right" }),
+    InfiniteJump = tabs.Main:Section({ Side = "Left" }),
+    Godmode = tabs.Main:Section({ Side = "Right" }),
+    Win = tabs.Main:Section({ Side = "Left" }),
+    Anti = tabs.Visuals:Section({ Side = "Left" }),
+    Gears = tabs.Utility:Section({ Side = "Left" }),
+    AnticheatBypass = tabs.Utility:Section({ Side = "Right" }),
+    Credits = tabs.Credits:Section({ Side = "Left" }),
+    Discord = tabs.Credits:Section({ Side = "Right" })
+}
+
+sections.Credits:Header({ Name = "Credits" })
+sections.Credits:Paragraph({ Header = "Developers", Body = ".vnpr\nflamesiscoolz" })
+sections.Discord:Paragraph({ Header = "Join The Discord", Body = discord })
+sections.Discord:Button({
+    Name = "Copy Link",
     Callback = function()
         if setclipboard then
             setclipboard(discord)
@@ -239,27 +282,28 @@ Tabs.Credits:AddButton({
     end
 })
 
-local SpeedSection = Tabs.Main:AddSection("Speed")
+sections.Speed:Header({ Name = "Speed" })
 
-SpeedSection:AddToggle("SpeedToggle", {
-    Title = "Speed",
+sections.Speed:Toggle({
+    Name = "Speed",
     Default = false,
     Callback = function(Value)
         exoz.Speed.Enabled = Value
         Notify("Exoz", "Speed toggled " .. (Value and "on" or "off"), 2)
     end
-})
+}, "SpeedToggle")
 
-SpeedSection:AddSlider("SpeedSlider", {
-    Title = "Speed Slider",
-    Min = 16,
-    Max = 50,
+sections.Speed:Slider({
+    Name = "Speed Slider",
     Default = 16,
-    Rounding = 1,
+    Minimum = 16,
+    Maximum = 50,
+    DisplayMethod = "Number",
+    Precision = 1,
     Callback = function(Value)
         exoz.Speed.Current = Value
     end
-})
+}, "SpeedSlider")
 
 getgenv().ExozSpeedConnection = RunService.Heartbeat:Connect(function()
     local humanoid = getHumanoid()
@@ -274,27 +318,28 @@ getgenv().ExozSpeedConnection = RunService.Heartbeat:Connect(function()
     end
 end)
 
-local JumpPowerSection = Tabs.Main:AddSection("Jump Power")
+sections.JumpPower:Header({ Name = "Jump Power" })
 
-JumpPowerSection:AddToggle("JumpPowerToggle", {
-    Title = "Jump Power",
+sections.JumpPower:Toggle({
+    Name = "Jump Power",
     Default = false,
     Callback = function(Value)
         exoz.Jumppower.Enabled = Value
         Notify("Exoz", "Jump power toggled " .. (Value and "on" or "off"), 2)
     end
-})
+}, "JumpPowerToggle")
 
-JumpPowerSection:AddSlider("JumpPowerSlider", {
-    Title = "Jump Power Slider",
-    Min = 50.145,
-    Max = 400,
+sections.JumpPower:Slider({
+    Name = "Jump Power Slider",
     Default = 50.145,
-    Rounding = 1,
+    Minimum = 50.145,
+    Maximum = 400,
+    DisplayMethod = "Number",
+    Precision = 1,
     Callback = function(Value)
         exoz.Jumppower.Current = Value
     end
-})
+}, "JumpPowerSlider")
 
 getgenv().ExozJumpPowerConnection = RunService.Heartbeat:Connect(function()
     local humanoid = getHumanoid()
@@ -307,10 +352,10 @@ getgenv().ExozJumpPowerConnection = RunService.Heartbeat:Connect(function()
     end
 end)
 
-local InfJumpSection = Tabs.Main:AddSection("Infinite Jump")
+sections.InfiniteJump:Header({ Name = "Infinite Jump" })
 
-InfJumpSection:AddToggle("InfJumpToggle", {
-    Title = "Infinite Jump",
+sections.InfiniteJump:Toggle({
+    Name = "Infinite Jump",
     Default = false,
     Callback = function(Value)
         exoz.Infjump.Enabled = Value
@@ -324,25 +369,26 @@ InfJumpSection:AddToggle("InfJumpToggle", {
         end
         Notify("Exoz", "Infinite jump toggled " .. (Value and "on" or "off"), 2)
     end
-})
+}, "InfJumpToggle")
 
-InfJumpSection:AddSlider("InfJumpSlider", {
-    Title = "Infinite Jump Height",
-    Min = 50.145,
-    Max = 100,
+sections.InfiniteJump:Slider({
+    Name = "Infinite Jump Height",
     Default = 50.145,
-    Rounding = 1,
+    Minimum = 50.145,
+    Maximum = 100,
+    DisplayMethod = "Number",
+    Precision = 1,
     Callback = function(Value)
         exoz.Infjump.Height = Value
     end
-})
+}, "InfJumpSlider")
 
 handleInfiniteJump()
 
-local GodmodeSection = Tabs.Main:AddSection("Godmode")
+sections.Godmode:Header({ Name = "Godmode" })
 
-GodmodeSection:AddToggle("GodmodeToggle", {
-    Title = "Godmode",
+sections.Godmode:Toggle({
+    Name = "Godmode",
     Default = false,
     Callback = function(Value)
         exoz.Godmode.Enabled = Value
@@ -355,7 +401,7 @@ GodmodeSection:AddToggle("GodmodeToggle", {
         end
         Notify("Exoz", "Godmode toggled " .. (Value and "on" or "off"), 2)
     end
-})
+}, "GodmodeToggle")
 
 getgenv().ExozGodmodeConnection = player.CharacterAdded:Connect(function(character)
     if exoz.Godmode.Enabled then
@@ -366,12 +412,11 @@ getgenv().ExozGodmodeConnection = player.CharacterAdded:Connect(function(charact
     end
 end)
 
-local WinSection = Tabs.Main:AddSection("Win")
+sections.Win:Header({ Name = "Win" })
+sections.Win:Paragraph({ Header = "Note:", Body = "Don't use in the first 30 seconds of the round. Anticheat will trigger on you." })
 
-WinSection:AddParagraph({Title = "Note:", Content = "Don't use in the first 30 seconds of the round. Anticheat will trigger on you."})
-
-WinSection:AddButton({
-    Title = "Win",
+sections.Win:Button({
+    Name = "Win",
     Callback = function()
         local character = player.Character
         local rootPart = getRootPart()
@@ -421,8 +466,8 @@ WinSection:AddButton({
     end
 })
 
-WinSection:AddToggle("InstantWinToggle", {
-    Title = "Instant",
+sections.Win:Toggle({
+    Name = "Instant",
     Default = false,
     Callback = function(Value)
         if Value then
@@ -432,12 +477,12 @@ WinSection:AddToggle("InstantWinToggle", {
         end
         Notify("Exoz", "Instant Win toggled " .. (Value and "on" or "off"), 2)
     end
-})
+}, "InstantWinToggle")
 
-local AntiSection = Tabs.Visuals:AddSection("Anti")
+sections.Anti:Header({ Name = "Anti" })
 
-AntiSection:AddToggle("AntiFogToggle", {
-    Title = "Anti Fog",
+sections.Anti:Toggle({
+    Name = "Anti Fog",
     Default = false,
     Callback = function(Value)
         exoz.Antifog.Enabled = Value
@@ -452,10 +497,10 @@ AntiSection:AddToggle("AntiFogToggle", {
             Notify("Exoz", "Fog restored!", 2)
         end
     end
-})
+}, "AntiFogToggle")
 
-AntiSection:AddToggle("AntiNegativeToggle", {
-    Title = "Anti Negative", 
+sections.Anti:Toggle({
+    Name = "Anti Negative", 
     Default = false,
     Callback = function(Value)
         exoz.Antinegative.Enabled = Value
@@ -468,13 +513,12 @@ AntiSection:AddToggle("AntiNegativeToggle", {
             Notify("Exoz", "No negative effect found!", 2)
         end
     end
-})
+}, "AntiNegativeToggle")
 
-local AnticheatBypassSection = Tabs.Utility:AddSection("Anticheat Bypass")
+sections.AnticheatBypass:Header({ Name = "Anticheat Bypass" })
 
-AnticheatBypassSection:AddToggle("Disabler", {
-    Title = "Disabler",
-    Description = "Credits to 7granddadpgn.",
+sections.AnticheatBypass:Toggle({
+    Name = "Disabler",
     Default = true,
     Callback = function(Value)
         exoz.Disabler.Enabled = Value
@@ -510,17 +554,19 @@ AnticheatBypassSection:AddToggle("Disabler", {
             Notify("Exoz", "Disabler disabled!", 2)
         end
     end
-})
+}, "Disabler")
 
-AnticheatBypassSection:AddButton({
-    Title = "Anti Kick",
+sections.AnticheatBypass:Divider()
+
+sections.AnticheatBypass:Button({
+    Name = "Anti Kick",
     Callback = function()
         Window:Dialog({
-            Title   = "Anti Kick",
-            Content = "Are you sure you want to enable Anti Kick?",
+            Title = "Anti Kick",
+            Description = "Are you sure you want to enable Anti Kick?",
             Buttons = {
                 {
-                    Title    = "Confirm",
+                    Name = "Confirm",
                     Callback = function()
                         local success, error = pcall(function()
                             local localScript = game:GetService("Players").LocalPlayer.PlayerScripts:FindFirstChild("LocalScript")
@@ -545,7 +591,7 @@ AnticheatBypassSection:AddButton({
                     end
                 },
                 {
-                    Title    = "Cancel",
+                    Name = "Cancel",
                     Callback = function()
                         Notify("Exoz", "Cancelled Anti Kick toggle.", 2)
                     end
@@ -555,12 +601,12 @@ AnticheatBypassSection:AddButton({
     end
 })
 
-local GearsSection = Tabs.Utility:AddSection("Gears")
+sections.Gears:Header({ Name = "Gears" })
 
 local lastGearSpawn = 0
 for _, gear in pairs(exoz.TowerOfHell.Gears) do
-    GearsSection:AddButton({
-        Title = gear.Name,
+    sections.Gears:Button({
+        Name = gear.Name,
         Callback = function()
             if tick() - lastGearSpawn < 1 then
                 Notify("Exoz", "Please wait before spawning more gears", 2)
@@ -575,8 +621,10 @@ for _, gear in pairs(exoz.TowerOfHell.Gears) do
     })
 end
 
-GearsSection:AddButton({
-    Title = "Get All Gears",
+sections.Gears:Divider()
+
+sections.Gears:Button({
+    Name = "Get All Gears",
     Callback = function()
         if tick() - lastGearSpawn < 2 then
             Notify("Exoz", "Please wait before spawning more gears", 2)
@@ -593,14 +641,14 @@ GearsSection:AddButton({
     end
 })
 
-SaveManager:SetLibrary(Fluent)
-InterfaceManager:SetLibrary(Fluent)
-SaveManager:IgnoreThemeSettings()
-SaveManager:SetIgnoreIndexes({})
-InterfaceManager:SetFolder("Exoz")
-SaveManager:SetFolder("Exoz/".. gameName)
-InterfaceManager:BuildInterfaceSection(Tabs.Settings)
-SaveManager:BuildConfigSection(Tabs.Settings)
-Window:SelectTab(1)
+tabs.Settings:InsertConfigSection("Left")
+
+Window.onUnloaded(function()
+    cleanupConnections()
+end)
+
+tabs.Main:Select()
+MacLib:SetFolder("Exoz/" .. gameName)
+MacLib:LoadAutoLoadConfig()
+
 Notify("Exoz", "Loaded ".. gameName .. " script successfully.")
-SaveManager:LoadAutoloadConfig()
